@@ -1,0 +1,40 @@
+public class Card : MonoBehaviour
+{
+    public string cardName = "Card";
+    public int maxHealth = 10;
+    public int currentHealth;
+    public int attack = 3;
+
+    // Bu event/flag TurnManager'in bu kartın öldüğünü anlamasını kolaylaştırır.
+    public bool IsDead => currentHealth <= 0;
+
+    void Awake()
+    {
+        currentHealth = maxHealth;
+    }
+
+    // Basit saldırı: hedefin TakeDamage metodunu çağırır.
+    public void Attack(Card target)
+    {
+        if (target == null || IsDead) return;
+        Debug.Log($"{cardName} ({currentHealth} HP) saldırıyor -> {target.cardName} ({target.currentHealth} HP) : {attack} hasar");
+        target.TakeDamage(attack);
+    }
+
+    public void TakeDamage(int amount)
+    {
+        currentHealth -= amount;
+        Debug.Log($"{cardName} hasar aldı: -{amount}. Kalan HP: {currentHealth}");
+        if (IsDead)
+        {
+            Die();
+        }
+    }
+
+    void Die()
+    {
+        Debug.Log($"{cardName} öldü.");
+        // İsteğe bağlı: objeyi sahneden kaldır:
+        // Destroy(gameObject);
+    }
+}
