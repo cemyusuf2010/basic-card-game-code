@@ -1,0 +1,83 @@
+public class TurnManager : MonoBehaviour
+{
+    // Sırayla saldıracak kartları buraya ekleyin (Inspector'dan atayabilirsiniz).
+    public List<Card> cards = new List<Card>();
+    public float timeBetweenTurns = 1.0f; // her saldırı arasında bekleme (oyun hızı için)
+
+    int currentIndex = 0;
+    bool running = false;
+
+    void Start()
+    {
+        // Basit güvenlik: en az 2 kart yoksa başlamaz.
+        if (cards.Count < 2)
+        {
+            Debug.LogWarning("En az iki card atayın.");
+            return;
+        }
+
+        // Başlat
+        StartCoroutine(RunTurns());
+    }
+
+    IEnumerator RunTurns()
+    {
+        running = true;
+        while (running)
+        {
+            // Aktif kart ve hedef kartı seç
+            Card attacker = GetNextAliveCardFrom(currentIndex);
+            Card target = GetNextAliveCardFrom((currentIndex + 1) % cards.Count);
+
+            if (attacker == null || target == null)
+            {
+                Debug.Log("Tur döngüsü sona erdi. Kazanan belirlendi veya yeterli kart yok.");
+                running = false;
+                yield break;
+            }
+
+            // Saldırı gerçekleştir
+            attacker.Attack(target);
+
+            // Eğer hedef öldüyse kontrol et; eğer tek kalan kalmışsa oyunu bitir.
+            if (OnlyOneAlive())
+            {
+                Card winner = GetFirstAliveCard();
+                Debug.Log($"Oyun bitti. Kazanan: { (winner != null ? winner.cardName : "Yok") }");
+                running = false;
+                yield break;
+            }
+
+            // Sonraki saldırıcı indexini ayarla
+            currentIndex = (currentIndex + 1) % cards.Count;
+
+            // Bekle
+            yield return new WaitForSeconds(timeBetweenTurns);
+        }
+    }
+
+    Card GetNextAliveCardFrom(int startIndex)
+    {
+        if (cards.Count == 0) return null;
+        for (int i = 0; i < cards.Count; i++)
+        {
+            int idx = (startIndex + i) % cards.Count;
+            Card c = cards[idx];
+            if (c != null && !c.IsDead) return c;
+        }
+        return null;
+    }
+
+    bool OnlyOneAlive()
+    {
+        int alive = 0;
+        foreach (var c in cards) if (c != null && !c.IsDead) alive++;
+        return alive <= 1;
+    }
+
+    Card GetFirstAliveCard()
+    {
+        foreach (var c in cards) if (c != null && !c.IsDead) return c;
+        return null;
+    }
+}
